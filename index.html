@@ -15,15 +15,21 @@
     <div class="container py-5">
         <div class="w-75 mx-auto">
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="title" placeholder="todo title">
+                <input type="text" oninput="validateInput(this)" class="form-control" id="title" placeholder="todo title">
+                <div class="alert alert-danger p-1 mt-2 d-none">
+                    <small>Title should be 1-50 characters long and can include letters, numbers, and spaces.</small>
+                </div>
                 <label for="title">todo title</label>
             </div>
             <div class="form-floating mb-3">
-                <textarea class="form-control" id="description" placeholder="todo description"></textarea>
+                <textarea oninput="validateInput(this)" class="form-control" id="description" placeholder="todo description"></textarea>
+                <div class="alert alert-danger p-1 mt-2 d-none">
+                    <small>Description should be 1-200 characters long and can include letters, numbers, and common punctuation.</small>
+                </div>
                 <label for="description">todo description</label>
             </div>
             <div class="d-flex justify-content-end">
-                <button class="btn btn-primary px-4" id="addBtn">Add</button>
+                <button disabled class="btn btn-primary px-4" id="addBtn">Add</button>
                 <button class="btn btn-warning px-4 d-none" id="updateBtn">Update</button>
             </div>
         </div>
