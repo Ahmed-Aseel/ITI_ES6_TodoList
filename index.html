@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
     <div class="container py-5">
@@ -20,11 +22,19 @@
                 <textarea class="form-control" id="description" placeholder="todo description"></textarea>
                 <label for="description">todo description</label>
             </div>
-            <button class="btn btn-primary d-block ms-auto px-4" id="addBtn">Add</button>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-primary px-4" id="addBtn">Add</button>
+                <button class="btn btn-warning px-4 d-none" id="updateBtn">Update</button>
+            </div>
+        </div>
+
+        <div class="w-75 mx-auto mt-5" id="todoListContainer">
+
         </div>
     </div>
-    
+
     <script src="js/bootstrap.bundle.min.js"></script>
-    <script src="js/script.js"></script>    
+    <script src="js/script.js"></script>
 </body>
+
 </html>
