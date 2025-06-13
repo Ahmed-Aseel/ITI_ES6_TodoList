@@ -1,0 +1,9 @@
+body {
+    background-color: black;
+    color: white;
+}
+
+.form-floating label {
+    color: #86b7fe;
+    left: 10px;
+}
