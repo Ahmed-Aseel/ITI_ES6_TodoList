@@ -1,4 +1,3 @@
-// Type definition for a single to-do item
 interface TodoItem {
     id: number;
     title: string;
@@ -6,142 +5,192 @@ interface TodoItem {
     completed: boolean;
 }
 
-// Get DOM elements
+// DOM Elements
 const titleInput = document.getElementById("title") as HTMLInputElement | null;
 const descriptionInput = document.getElementById("description") as HTMLTextAreaElement | null;
 const addButton = document.getElementById("addBtn") as HTMLButtonElement | null;
 const updateButton = document.getElementById("updateBtn") as HTMLButtonElement | null;
 const todoListContainer = document.getElementById("todoListContainer") as HTMLDivElement | null;
 
-// Retrieve existing to-do list or initialize a new one
-let todoList: TodoItem[] = [];
-const storedTodos = localStorage.getItem("todoList");
-if (storedTodos) {
-    todoList = JSON.parse(storedTodos);
-    displayTodoList(todoList);
-}
+let todoList: TodoItem[] = getStoredTodos();
+let currentEditId: number | null = null;
 
-// Add event listener for add button
+// Initial Render
+renderTodoList();
+
+// Event Listeners
 addButton?.addEventListener("click", handleAddTodo);
-// Add event listener for update button
 updateButton?.addEventListener("click", handleUpdateTodo);
 
-// Function to add a new todo item
+function getStoredTodos(): TodoItem[] {
+    const stored = localStorage.getItem("todoList");
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveTodos(): void {
+    localStorage.setItem("todoList", JSON.stringify(todoList));
+}
+
+const regex = {
+    title: {
+        pattern: /^[a-zA-Z0-9\s]{1,50}$/,
+        isValid: false
+    },
+    description: {
+        pattern: /^[a-zA-Z0-9\s.,!?]{1,200}$/,
+        isValid: false
+    }
+};
+
+function validateInput(element: HTMLInputElement | HTMLTextAreaElement) {
+    const value = element.value.trim();
+    const isValid = regex[element.id as keyof typeof regex].pattern.test(value);
+
+    if (isValid) {
+        element.classList.remove("is-invalid");
+        element.classList.add("is-valid");
+        element.nextElementSibling?.classList.add("d-none");
+        regex[element.id as keyof typeof regex].isValid = true;
+    } else {
+        element.classList.remove("is-valid");
+        element.classList.add("is-invalid");
+        element.nextElementSibling?.classList.remove("d-none");
+        regex[element.id as keyof typeof regex].isValid = false;
+    }
+
+    toggleFormButtonStates();
+}
+
+function toggleFormButtonStates() {
+    const isFormValid = regex.title.isValid && regex.description.isValid;
+
+    if (addButton) addButton.disabled = !isFormValid;
+    if (updateButton && !updateButton.classList.contains("d-none")) {
+        updateButton.disabled = !isFormValid;
+    }
+}
+
 function handleAddTodo(): void {
     const title = titleInput?.value.trim() ?? "";
     const description = descriptionInput?.value.trim() ?? "";
 
-    if (!title) {
-        alert("Title is required.");
-        return;
-    }
-
     const newTodo: TodoItem = {
-        id: todoList.length,
+        id: Date.now(),
         title,
         description,
         completed: false
     };
 
     todoList.push(newTodo);
-    localStorage.setItem("todoList", JSON.stringify(todoList));
+    saveTodos();
+    resetForm();
+    renderTodoList();
 
-    // Reset input fields
-    if (titleInput) titleInput.value = "";
-    if (descriptionInput) descriptionInput.value = "";
-
-    // Display updated todo list
-    displayTodoList(todoList);
+    if (addButton) addButton.disabled = true;
 }
 
-function displayTodoList(todos: TodoItem[]): void {
+function handleUpdateTodo(): void {
+    if (currentEditId === null) return;
+
+    const title = titleInput?.value.trim() ?? "";
+    const description = descriptionInput?.value.trim() ?? "";
+
+    if (!title) return alert("Title is required.");
+
+    const todo = todoList.find(t => t.id === currentEditId);
+    if (!todo) return;
+
+    todo.title = title;
+    todo.description = description;
+
+    saveTodos();
+    resetForm();
+    renderTodoList();
+}
+
+function resetForm(): void {
+    if (titleInput) {
+        titleInput.value = "";
+        titleInput.classList.remove("is-valid", "is-invalid");
+        regex.title.isValid = false;
+    }
+
+    if (descriptionInput) {
+        descriptionInput.value = "";
+        descriptionInput.classList.remove("is-valid", "is-invalid");
+        regex.description.isValid = false;
+    }
+
+    addButton?.classList.remove("d-none");
+    updateButton?.classList.add("d-none");
+    currentEditId = null;
+
+    toggleFormButtonStates();
+}
+
+function renderTodoList(): void {
     if (!todoListContainer) return;
 
-    // Clear existing content
     todoListContainer.innerHTML = "";
 
-    // Render each todo item
-    todos.forEach((todo, index) => {
-        const todoRow = document.createElement("div");
-        todoRow.className = "d-flex justify-content-between align-items-center border px-4 py-3 mb-4 rounded";
+    todoList.forEach(todo => {
+        const row = document.createElement("div");
+        row.className = "d-flex justify-content-between align-items-center border px-4 py-3 mb-4 rounded";
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = todo.title;
         titleSpan.className = todo.completed ? "text-decoration-line-through text-muted" : "";
 
         const iconsDiv = document.createElement("div");
+        iconsDiv.appendChild(createButton("✔", "success", () => toggleCompleted(todo.id)));
+        iconsDiv.appendChild(createButton("✏️", "warning", () => prepareEdit(todo.id)));
+        iconsDiv.appendChild(createButton("🗑️", "danger", () => deleteTodo(todo.id)));
 
-        const doneBtn = document.createElement("button");
-        doneBtn.className = "btn btn-success btn-sm me-2";
-        doneBtn.innerHTML = "✔";
-        doneBtn.title = "Mark as done";
-        doneBtn.onclick = () => toggleDone(index);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "btn btn-warning btn-sm me-2";
-        editBtn.innerHTML = "✏️";
-        editBtn.title = "Edit";
-        editBtn.onclick = () => editTodo(index);
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "btn btn-danger btn-sm";
-        deleteBtn.innerHTML = "🗑️";
-        deleteBtn.title = "Delete";
-        deleteBtn.onclick = () => deleteTodo(index);
-
-        iconsDiv.append(doneBtn, editBtn, deleteBtn);
-        todoRow.append(titleSpan, iconsDiv);
-        
-        todoListContainer.appendChild(todoRow);
+        row.append(titleSpan, iconsDiv);
+        todoListContainer.appendChild(row);
     });
 }
 
-// Function to delete a todo item
-function deleteTodo(index: number): void {
-    todoList.splice(index, 1);
-    localStorage.setItem("todoList", JSON.stringify(todoList));
-    displayTodoList(todoList);
+function createButton(label: string, type: string, onClick: () => void): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.className = `btn btn-${type} btn-sm me-2`;
+    button.innerHTML = label;
+    button.onclick = onClick;
+    return button;
 }
 
-function toggleDone(index: number): any {
-    todoList[index].completed = !todoList[index].completed;
-    localStorage.setItem("todoList", JSON.stringify(todoList));
-    displayTodoList(todoList);
+function toggleCompleted(id: number): void {
+    const todo = todoList.find(t => t.id === id);
+    if (!todo) return;
+
+    todo.completed = !todo.completed;
+    saveTodos();
+    renderTodoList();
 }
 
-let currentIndex = 0;
+function prepareEdit(id: number): void {
+    const todo = todoList.find(t => t.id === id);
+    if (!todo) return;
 
-function editTodo(index: number): any {
-    if (titleInput) titleInput.value = todoList[index].title;
-    if (descriptionInput) descriptionInput.value = todoList[index].description;
-    addButton?.classList.add("d-none");
-    updateButton?.classList.remove("d-none");
-    currentIndex = index;
-}
-
-function handleUpdateTodo(): void {
-    const title = titleInput?.value.trim() ?? "";
-    const description = descriptionInput?.value.trim() ?? "";
-
-    if (!title) {
-        alert("Title is required.");
-        return;
+    if (titleInput) {
+        titleInput.value = todo.title;
+        validateInput(titleInput);
     }
 
-    // Update the todo item
-    todoList[currentIndex].title = title;
-    todoList[currentIndex].description = description;
-    localStorage.setItem("todoList", JSON.stringify(todoList));
+    if (descriptionInput) {
+        descriptionInput.value = todo.description;
+        validateInput(descriptionInput);
+    }
 
-    // Reset input fields
-    if (titleInput) titleInput.value = "";
-    if (descriptionInput) descriptionInput.value = "";
+    currentEditId = id;
+    addButton?.classList.add("d-none");
+    updateButton?.classList.remove("d-none");
 
-    // Hide update button and show add button
-    addButton?.classList.remove("d-none");
-    updateButton?.classList.add("d-none");
-
-    // Display updated todo list
-    displayTodoList(todoList);
+    toggleFormButtonStates();
 }
 
+function deleteTodo(id: number): void {
+    todoList = todoList.filter(t => t.id !== id);
+    saveTodos();
+    renderTodoList();
+}
