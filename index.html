@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple To Do List application">
+    <title>To Do List</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="container py-5">
+        <div class="w-75 mx-auto">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="title" placeholder="todo title">
+                <label for="title">todo title</label>
+            </div>
+            <div class="form-floating mb-3">
+                <textarea class="form-control" id="description" placeholder="todo description"></textarea>
+                <label for="description">todo description</label>
+            </div>
+            <button class="btn btn-primary d-block ms-auto px-4" id="addBtn">Add</button>
+        </div>
+    </div>
+    
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/script.js"></script>    
+</body>
+</html>
