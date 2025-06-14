@@ -6,3 +6,12 @@ body {
 .form-floating label {
     color: #86b7fe;
 }
+
+.strike-black {
+  text-decoration: line-through !important;
+  text-decoration-color: black !important;
+}
+
+button, button i {
+    cursor: pointer;
+}
