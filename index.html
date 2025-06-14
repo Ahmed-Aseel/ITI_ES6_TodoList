@@ -1,30 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A simple To Do List application">
     <title>To Do List</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-    <div class="container py-5">
+    <div class="container py-5 border border-primary rounded-4">
         <div class="w-75 mx-auto">
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="title" placeholder="todo title">
+                <input type="text" oninput="validateInput(this)" class="form-control" id="title" placeholder="todo title">
+                <div class="alert alert-danger p-1 mt-2 d-none">
+                    <small>Title should be 1-50 characters long and can include letters, numbers, and spaces.</small>
+                </div>
                 <label for="title">todo title</label>
             </div>
             <div class="form-floating mb-3">
-                <textarea class="form-control" id="description" placeholder="todo description"></textarea>
+                <textarea oninput="validateInput(this)" class="form-control" id="description" placeholder="todo description"></textarea>
+                <div class="alert alert-danger p-1 mt-2 d-none">
+                    <small>Description should be 1-200 characters long and can include letters, numbers, and common punctuation.</small>
+                </div>
                 <label for="description">todo description</label>
             </div>
-            <button class="btn btn-primary d-block ms-auto px-4" id="addBtn">Add</button>
+            <div class="d-flex justify-content-end">
+                <button disabled class="btn btn-primary px-4" id="addBtn">Add</button>
+                <button class="btn btn-warning px-4 d-none" id="updateBtn">Update</button>
+            </div>
+        </div>
+
+        <div class="w-75 mx-auto mt-5" id="todoListContainer">
+
         </div>
     </div>
-    
+
     <script src="js/bootstrap.bundle.min.js"></script>
-    <script src="js/script.js"></script>    
+    <script src="js/script.js"></script>
 </body>
+
 </html>
