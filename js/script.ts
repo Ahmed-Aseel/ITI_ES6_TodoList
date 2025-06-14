@@ -29,12 +29,12 @@ const regex: Record<"title" | "description", FieldValidation> = {
     title: {
         pattern: /^[a-zA-Z][a-zA-Z0-9\s]{0,49}$/,
         isValid: false,
-        errorMessage: "Title must start with a letter and be 1–50 characters long. Only letters, numbers, and spaces are allowed."
+        errorMessage: "Title must start with a letter and be 1-50 characters long. Only letters, numbers, and spaces are allowed."
     },
     description: {
         pattern: /^[a-zA-Z][a-zA-Z0-9\s.,!?]{0,199}$/,
         isValid: false,
-        errorMessage: "Description must start with a letter and be 1–200 characters long. Only letters, numbers, spaces, and . , ! ? are allowed."
+        errorMessage: "Description must start with a letter and be 1-200 characters long. Only letters, numbers, spaces, and . , ! ? are allowed."
     }
 };
 
@@ -179,7 +179,7 @@ function renderTodoList(): void {
         iconsDiv.className = "d-flex flex-wrap gap-2";
         iconsDiv.appendChild(createIconButton("fas fa-check", "success", () => toggleCompleted(todo.id)));
         iconsDiv.appendChild(createIconButton("fas fa-edit", "warning", () => prepareEdit(todo.id), todo.completed));
-        iconsDiv.appendChild(createIconButton("fas fa-trash", "danger", () => deleteTodo(todo.id), todo.completed));
+        iconsDiv.appendChild(createIconButton("fas fa-trash", "danger", () => deleteTodo(todo.id)));
 
         row.append(titleSpan, iconsDiv);
         todoListContainer.appendChild(row);
