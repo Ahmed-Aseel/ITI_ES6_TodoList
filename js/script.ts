@@ -1,3 +1,4 @@
+// Represents a single todo item
 interface TodoItem {
     id: number;
     title: string;
@@ -5,62 +6,81 @@ interface TodoItem {
     completed: boolean;
 }
 
-// DOM Elements
+// Represents validation rules for form fields
+interface FieldValidation {
+    pattern: RegExp;
+    isValid: boolean;
+    errorMessage: string;
+}
+
+// === DOM Element References ===
 const titleInput = document.getElementById("title") as HTMLInputElement | null;
 const descriptionInput = document.getElementById("description") as HTMLTextAreaElement | null;
 const addButton = document.getElementById("addBtn") as HTMLButtonElement | null;
 const updateButton = document.getElementById("updateBtn") as HTMLButtonElement | null;
 const todoListContainer = document.getElementById("todoListContainer") as HTMLDivElement | null;
 
-let todoList: TodoItem[] = getStoredTodos();
-let currentEditId: number | null = null;
+// === App State ===
+let todoList: TodoItem[] = getStoredTodos(); // Load from localStorage
+let currentEditId: number | null = null;     // For tracking item being edited
 
-// Initial Render
+// === Validation Rules ===
+const regex: Record<"title" | "description", FieldValidation> = {
+    title: {
+        pattern: /^[a-zA-Z][a-zA-Z0-9\s]{0,49}$/,
+        isValid: false,
+        errorMessage: "Title must start with a letter and be 1–50 characters long. Only letters, numbers, and spaces are allowed."
+    },
+    description: {
+        pattern: /^[a-zA-Z][a-zA-Z0-9\s.,!?]{0,199}$/,
+        isValid: false,
+        errorMessage: "Description must start with a letter and be 1–200 characters long. Only letters, numbers, spaces, and . , ! ? are allowed."
+    }
+};
+
+// === Initial Render ===
 renderTodoList();
 
-// Event Listeners
+// === Event Listeners ===
 addButton?.addEventListener("click", handleAddTodo);
 updateButton?.addEventListener("click", handleUpdateTodo);
 
+// === Load Todos from Local Storage ===
 function getStoredTodos(): TodoItem[] {
     const stored = localStorage.getItem("todoList");
     return stored ? JSON.parse(stored) : [];
 }
 
+// === Save Todos to Local Storage ===
 function saveTodos(): void {
     localStorage.setItem("todoList", JSON.stringify(todoList));
 }
 
-const regex = {
-    title: {
-        pattern: /^[a-zA-Z0-9\s]{1,50}$/,
-        isValid: false
-    },
-    description: {
-        pattern: /^[a-zA-Z0-9\s.,!?]{1,200}$/,
-        isValid: false
-    }
-};
-
+// === Input Validation Handler ===
 function validateInput(element: HTMLInputElement | HTMLTextAreaElement) {
+    const field = element.id as keyof typeof regex;
+    const { pattern, errorMessage } = regex[field];
     const value = element.value.trim();
-    const isValid = regex[element.id as keyof typeof regex].pattern.test(value);
+    const isValid = pattern.test(value);
+    const alertDiv = element.nextElementSibling as HTMLElement;
 
     if (isValid) {
         element.classList.remove("is-invalid");
         element.classList.add("is-valid");
-        element.nextElementSibling?.classList.add("d-none");
-        regex[element.id as keyof typeof regex].isValid = true;
+        alertDiv.classList.add("d-none");
     } else {
         element.classList.remove("is-valid");
         element.classList.add("is-invalid");
-        element.nextElementSibling?.classList.remove("d-none");
-        regex[element.id as keyof typeof regex].isValid = false;
+        alertDiv.classList.remove("d-none");
+        const msg = alertDiv.querySelector("small");
+        if (msg) msg.textContent = errorMessage;
     }
 
+    regex[field].isValid = isValid;
     toggleFormButtonStates();
 }
 
+// === Enable/Disable Add or Update Button ===
 function toggleFormButtonStates() {
     const isFormValid = regex.title.isValid && regex.description.isValid;
 
@@ -70,6 +90,7 @@ function toggleFormButtonStates() {
     }
 }
 
+// === Add New Todo ===
 function handleAddTodo(): void {
     const title = titleInput?.value.trim() ?? "";
     const description = descriptionInput?.value.trim() ?? "";
@@ -89,13 +110,12 @@ function handleAddTodo(): void {
     if (addButton) addButton.disabled = true;
 }
 
+// === Update Existing Todo ===
 function handleUpdateTodo(): void {
     if (currentEditId === null) return;
 
     const title = titleInput?.value.trim() ?? "";
     const description = descriptionInput?.value.trim() ?? "";
-
-    if (!title) return alert("Title is required.");
 
     const todo = todoList.find(t => t.id === currentEditId);
     if (!todo) return;
@@ -108,6 +128,7 @@ function handleUpdateTodo(): void {
     renderTodoList();
 }
 
+// === Reset Form After Add/Update ===
 function resetForm(): void {
     if (titleInput) {
         titleInput.value = "";
@@ -128,37 +149,58 @@ function resetForm(): void {
     toggleFormButtonStates();
 }
 
+// === Render Todo List to the Page ===
 function renderTodoList(): void {
     if (!todoListContainer) return;
 
     todoListContainer.innerHTML = "";
 
+    if (todoList.length === 0) {
+        // UX: Message when no items exist
+        const emptyMsg = document.createElement("div");
+        emptyMsg.className = "text-center text-secondary fs-5 py-5";
+        emptyMsg.innerHTML = `<i class="fas fa-inbox fa-2x mb-3 d-block"></i>No tasks found. Add a new one above.`;
+        todoListContainer.appendChild(emptyMsg);
+        return;
+    }
+
     todoList.forEach(todo => {
         const row = document.createElement("div");
-        row.className = "d-flex justify-content-between align-items-center border px-4 py-3 mb-4 rounded";
+        row.className = "todo-row border px-4 py-3 mb-4 rounded d-flex flex-row justify-content-between align-items-center gap-3";
+        if (todo.completed) {
+            row.classList.add("bg-success", "bg-opacity-50", "strike-black");
+        }
 
         const titleSpan = document.createElement("span");
         titleSpan.textContent = todo.title;
-        titleSpan.className = todo.completed ? "text-decoration-line-through text-muted" : "";
+        titleSpan.className = "fw-semibold fs-5";
 
         const iconsDiv = document.createElement("div");
-        iconsDiv.appendChild(createButton("✔", "success", () => toggleCompleted(todo.id)));
-        iconsDiv.appendChild(createButton("✏️", "warning", () => prepareEdit(todo.id)));
-        iconsDiv.appendChild(createButton("🗑️", "danger", () => deleteTodo(todo.id)));
+        iconsDiv.className = "d-flex flex-wrap gap-2";
+        iconsDiv.appendChild(createIconButton("fas fa-check", "success", () => toggleCompleted(todo.id)));
+        iconsDiv.appendChild(createIconButton("fas fa-edit", "warning", () => prepareEdit(todo.id), todo.completed));
+        iconsDiv.appendChild(createIconButton("fas fa-trash", "danger", () => deleteTodo(todo.id), todo.completed));
 
         row.append(titleSpan, iconsDiv);
         todoListContainer.appendChild(row);
     });
 }
 
-function createButton(label: string, type: string, onClick: () => void): HTMLButtonElement {
+// === Create Reusable Icon Button ===
+function createIconButton(iconClass: string, type: string, onClick: () => void, disabled = false): HTMLButtonElement {
     const button = document.createElement("button");
     button.className = `btn btn-${type} btn-sm me-2`;
-    button.innerHTML = label;
+    button.disabled = disabled;
+
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+
+    button.appendChild(icon);
     button.onclick = onClick;
     return button;
 }
 
+// === Toggle Completion Status ===
 function toggleCompleted(id: number): void {
     const todo = todoList.find(t => t.id === id);
     if (!todo) return;
@@ -168,6 +210,7 @@ function toggleCompleted(id: number): void {
     renderTodoList();
 }
 
+// === Prepare Form for Editing Existing Todo ===
 function prepareEdit(id: number): void {
     const todo = todoList.find(t => t.id === id);
     if (!todo) return;
@@ -189,8 +232,10 @@ function prepareEdit(id: number): void {
     toggleFormButtonStates();
 }
 
+// === Delete Todo by ID ===
 function deleteTodo(id: number): void {
     todoList = todoList.filter(t => t.id !== id);
     saveTodos();
+    resetForm();
     renderTodoList();
 }
